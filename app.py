@@ -72,10 +72,7 @@ if uploaded_file is not None:
 
         with col1:
             st.dataframe(emoji_df)
-        with col2:
-            fig,ax = plt.subplots()
-            ax.pie(emoji_df[1].head(),labels=emoji_df[0].head(),autopct="%0.2f")
-            st.pyplot(fig)
+
 
         st.title("Daily Timeline")
         daily_timeline = helper.daily_timeline(selected_user, df)
@@ -109,6 +106,7 @@ if uploaded_file is not None:
             ax.bar(busy_month.index, busy_month.values,color='orange')
             plt.xticks(rotation='vertical')
             st.pyplot(fig)
+
 
 
 
