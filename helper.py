@@ -27,7 +27,7 @@ def most_busy_users(df):
     return x,df
 
 def word_cloud(selected_user,df):
-    f=open('C://Users//zaid ansari//Downloads//stop_hinglish.txt','r')
+    f=open('stop_hinglish.txt','r')
     stop_words=f.read()
 
     if selected_user!='Overall':
@@ -47,7 +47,7 @@ def word_cloud(selected_user,df):
     return df_wc
 
 def most_common_words(selected_user,df):
-    f=open('C://Users//zaid ansari//Downloads//stop_hinglish.txt','r')
+    f=open('stop_hinglish.txt','r')
     stop_words=f.read()
 
     if selected_user!='Overall':
@@ -118,6 +118,7 @@ def activity_heatmap(selected_user,df):
     user_heatmap = df.pivot_table(index='day_name', columns='period', values='message', aggfunc='count').fillna(0)
 
     return user_heatmap
+
 
 
 
