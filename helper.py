@@ -46,37 +46,35 @@ def word_cloud(selected_user, df):
 
     temp = df.copy()
 
+    # Remove group notifications
     temp = temp[temp["user"] != "group_notification"]
 
+    # Remove nulls
     temp = temp.dropna(subset=["message"])
 
+    # Convert to string
     temp["message"] = temp["message"].astype(str)
 
-    temp = temp[~temp["message"].str.contains("Media omitted", na=False)]
+    # Remove media messages
+    temp = temp[~temp["message"].str.contains("Media omitted", case=False, na=False)]
 
     def remove_stopwords(message):
-
-        words = []
-
-        for word in message.lower().split():
-            if word not in stop_words:
-                words.append(word)
-
-        return " ".join(words)
+        return " ".join(
+            word for word in message.lower().split()
+            if word not in stop_words
+        )
 
     temp["message"] = temp["message"].apply(remove_stopwords)
 
+    # Remove blank rows
     temp = temp[temp["message"].str.strip() != ""]
 
-    if temp.empty:
-        wc = WordCloud(
-            width=500,
-            height=500,
-            background_color="white"
-        )
-        return wc.generate("No Data")
+    # Build final text
+    text = " ".join(temp["message"]).strip()
 
-    text = " ".join(temp["message"])
+    # If no words remain, return placeholder cloud
+    if len(text) == 0:
+        text = "No Data"
 
     wc = WordCloud(
         width=500,
@@ -86,7 +84,6 @@ def word_cloud(selected_user, df):
     )
 
     return wc.generate(text)
-
 
 def most_common_words(selected_user, df):
 
