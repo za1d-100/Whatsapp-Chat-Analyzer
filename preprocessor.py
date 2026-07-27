@@ -1,57 +1,79 @@
 import re
 import pandas as pd
+
+
 def preprocess(data):
-    pattern = r'(\d{1,2}/\d{1,2}/\d{2,4}),\s(\d{1,2}:\d{2})\u202f(AM|PM)\s-\s'
-    allmessage = re.split(pattern, data)[1:]
+
+    # Split messages (supports WhatsApp exports like: 12/06/22, 8:44 pm - )
+    pattern = r'(\d{1,2}/\d{1,2}/\d{2,4}),\s(\d{1,2}:\d{2})\s*([AaPp][Mm])\s-\s'
+
+    parts = re.split(pattern, data)[1:]
+
     messages = []
+    dates = []
 
-    for i in range(3, len(allmessage), 4):
-        if i < len(allmessage):
-            messages.append(allmessage[i].strip())
-    dates = re.findall(pattern, data)
-    datetime_strings = []
-    for date_tuple in dates:
-        date_str, time_str, am_pm = date_tuple
-        # Combine into format: "5/26/22 11:53 PM"
-        datetime_str = f"{date_str} {time_str} {am_pm}"
-        datetime_strings.append(datetime_str)
+    for i in range(0, len(parts), 4):
+        date = parts[i]
+        time = parts[i + 1]
+        ampm = parts[i + 2].upper()
+        message = parts[i + 3]
 
-    # Now create DataFrame with proper datetime strings
-    df = pd.DataFrame({'user_message': messages, 'date': datetime_strings})
+        dates.append(f"{date} {time} {ampm}")
+        messages.append(message.strip())
 
-    # Convert to datetime with correct format (US format: MM/DD/YY)
-    df['date'] = pd.to_datetime(df['date'], format='%m/%d/%y %I:%M %p')
+    df = pd.DataFrame({
+        "user_message": messages,
+        "date": dates
+    })
+
+    # Automatically detect date format
+    df["date"] = pd.to_datetime(
+        df["date"],
+        dayfirst=True,
+        errors="coerce"
+    )
+
+    df = df.dropna(subset=["date"])
+
     users = []
-    messages = []
-    for message in df['user_message']:
-        entry = re.split(r'([\w\W]+?):\s', message)
-        if entry[1:]:  # user name
-            users.append(entry[1])
-            messages.append(" ".join(entry[2:]))
+    msg = []
+
+    for message in df["user_message"]:
+
+        entry = re.split(r"([^:]+):\s", message, maxsplit=1)
+
+        if len(entry) >= 3:
+            users.append(entry[1].strip())
+            msg.append(entry[2].strip())
         else:
-            users.append('group_notification')
-            messages.append(entry[0])
-    df['user'] = users
-    df['message'] = messages
-    df.drop('user_message', axis=1, inplace=True)
-    df['only_date'] = pd.to_datetime(df['date'].dt.date)
-    df['year'] = df['date'].dt.year
-    df['month_num'] = df['date'].dt.month
-    df['month'] = df['date'].dt.month_name()
-    df['day'] = df['date'].dt.day
-    df['day_name'] = df['date'].dt.day_name()
-    df['hour'] = df['date'].dt.hour
-    df['minute'] = df['date'].dt.minute
+            users.append("group_notification")
+            msg.append(message.strip())
+
+    df["user"] = users
+    df["message"] = msg
+
+    df.drop(columns=["user_message"], inplace=True)
+
+    df["only_date"] = df["date"].dt.date
+    df["year"] = df["date"].dt.year
+    df["month_num"] = df["date"].dt.month
+    df["month"] = df["date"].dt.month_name()
+    df["day"] = df["date"].dt.day
+    df["day_name"] = df["date"].dt.day_name()
+    df["hour"] = df["date"].dt.hour
+    df["minute"] = df["date"].dt.minute
+
     period = []
-    for hour in df[['day_name', 'hour']]['hour']:
+
+    for hour in df["hour"]:
+
         if hour == 23:
-            period.append(str(hour) + "-" + str('00'))
+            period.append("23-00")
         elif hour == 0:
-            period.append(str('00') + "-" + str(hour + 1))
+            period.append("00-01")
         else:
-            period.append(str(hour) + "-" + str(hour + 1))
+            period.append(f"{hour}-{hour+1}")
 
-    df['period'] = period
-
+    df["period"] = period
 
     return df
