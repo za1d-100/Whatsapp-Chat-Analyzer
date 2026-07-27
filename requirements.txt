@@ -7,3 +7,4 @@ pandas
 emoji
 scikit-learn
 numpy
+vaderSentiment
