@@ -32,7 +32,7 @@ def most_busy_users(df):
 
 def word_cloud(selected_user, df):
 
-    with open("C://Users//zaid ansari//Downloads//stop_hinglish.txt", "r", encoding="utf-8") as f:
+    with open("stop_hinglish.txt", "r", encoding="utf-8") as f:
         stop_words = set(f.read().split())
 
     temp = df.copy()
@@ -68,7 +68,7 @@ def word_cloud(selected_user, df):
     return wc.generate(" ".join(temp["message"]))
 def most_common_words(selected_user, df):
 
-    with open("C://Users//zaid ansari//Downloads//stop_hinglish.txt", "r", encoding="utf-8") as f:
+    with open("stop_hinglish.txt", "r", encoding="utf-8") as f:
         stop_words = set(f.read().split())
 
     temp = df.copy()
