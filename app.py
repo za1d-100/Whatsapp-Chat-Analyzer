@@ -67,13 +67,24 @@ if uploaded_file is not None:
         st.dataframe(mcw)
 
         st.title('Emojis analysis')
-        emoji_df=helper.emoji_counter(selected_user,df)
+        emoji_df = helper.emoji_counter(selected_user, df)
 
-        col1,col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
         with col1:
             st.dataframe(emoji_df)
 
+        with col2:
+            if emoji_df.empty:
+                st.info("No emojis found in this chat.")
+            else:
+                fig, ax = plt.subplots()
+                ax.pie(
+                    emoji_df["count"].head(),
+                    labels=emoji_df["emoji"].head(),
+                    autopct="%0.2f"
+                )
+                st.pyplot(fig)
 
         st.title("Daily Timeline")
         daily_timeline = helper.daily_timeline(selected_user, df)
@@ -83,14 +94,11 @@ if uploaded_file is not None:
         st.pyplot(fig)
 
         st.title("Weekly Activity Map")
-        user_heatmap = helper.activity_heatmap(selected_user, df)
+        user_heatmap = helper.activity_heatmap(selected_user,df)
+        fig,ax = plt.subplots()
+        ax = sns.heatmap(user_heatmap)
+        st.pyplot(fig)
 
-        if user_heatmap.empty:
-           st.info("No heatmap data available.")
-        else:
-           fig, ax = plt.subplots()
-           sns.heatmap(user_heatmap, ax=ax)
-           st.pyplot(fig)
 
         st.title('Activity Map')
         col1,col2 = st.columns(2)
@@ -110,7 +118,132 @@ if uploaded_file is not None:
             ax.bar(busy_month.index, busy_month.values,color='orange')
             plt.xticks(rotation='vertical')
             st.pyplot(fig)
+        # ==========================================
+        # AI Mood Monitor
+        # ==========================================
 
+        st.title("🧠 AI Mood Monitor")
+
+        days = st.selectbox(
+            "Select Time Range",
+            [7, 30, 90],
+            index=1
+        )
+
+        result = helper.mood_analysis(selected_user, df, days)
+
+        if result is None:
+
+            st.info("Not enough meaningful messages available for analysis.")
+
+        else:
+
+            current = result["current"]
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric(
+                    "😊 Positive",
+                    f"{current['positive']}%"
+                )
+
+            with col2:
+                st.metric(
+                    "😐 Neutral",
+                    f"{current['neutral']}%"
+                )
+
+            with col3:
+                st.metric(
+                    "😔 Negative",
+                    f"{current['negative']}%"
+                )
+
+            st.divider()
+
+            # Overall Mood
+
+            if current["negative"] < 20:
+                mood = "😊 Positive"
+
+            elif current["negative"] < 40:
+                mood = "😐 Neutral"
+
+            else:
+                mood = "😔 Negative"
+
+            st.subheader(f"Current Mood : {mood}")
+
+            st.divider()
+
+            # Trend
+
+            if result["trend"] == "Improved":
+
+                st.success(
+                    f"📈 Mood Improved\n\nNegative sentiment decreased by {result['change']}% compared to the previous period."
+                )
+
+            elif result["trend"] == "Declined":
+
+                st.error(
+                    f"📉 Mood Declined\n\nNegative sentiment increased by {result['change']}% compared to the previous period."
+                )
+
+            else:
+
+                st.info(
+                    "➖ Mood Stable\n\nNo significant change detected compared to the previous period."
+                )
+
+            st.divider()
+
+            # AI Insight
+
+            st.subheader("🤖 AI Insight")
+
+            if result["trend"] == "Improved":
+
+                st.success(
+                    """
+        Recent conversations appear more positive than the previous period.
+
+        The overall mood has improved and no major emotional risk is detected.
+                    """
+                )
+
+            elif result["trend"] == "Declined":
+
+                if current["negative"] >= 40:
+
+                    st.error(
+                        """
+        Recent conversations show a noticeable increase in negative sentiment.
+
+        The conversation may require attention as emotional tone has declined.
+                        """
+                    )
+
+                else:
+
+                    st.warning(
+                        """
+        Negative sentiment has increased compared to the previous period.
+
+        However, the overall conversation is still reasonably balanced.
+                        """
+                    )
+
+            else:
+
+                st.info(
+                    """
+        Conversation sentiment remained relatively stable during the selected period.
+
+        No major emotional changes were detected.
+                    """
+                )
 
 
 
